@@ -1,0 +1,6 @@
+.vscode
+**/venv
+**/.git
+**/.gitignore
+development-dockerfile
+development.yml
