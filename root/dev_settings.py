@@ -24,3 +24,4 @@ DATABASES = {
 }
 
 CELERY_BROKER_URL = f"amqp://{os.getenv('RABBITMQ_DEFAULT_USER')}:{os.getenv('RABBITMQ_DEFAULT_PASS')}@rabbitmq:5672"
+CELERY_RESULT_BACKEND = "django-db"

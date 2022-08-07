@@ -14,6 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq
@@ -25,6 +26,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   celeryworker:
     image: django_minimal/web_service
@@ -40,18 +42,26 @@ services:
       db:
         condition: service_healthy
     command: celery -A root worker -l INFO
+    restart: unless-stopped
 
   web:
     build:
       dockerfile: development-dockerfile
       context: .
     image: django_minimal/web_service
-    command: python manage.py runserver 0.0.0.0:8000
+    command: >
+      bash -c "python manage.py makemigrations &&
+               python manage.py migrate &&
+               echo \"from django.contrib.auth.models import User; \\
+               User.objects.create_superuser('admin', 'admin@example.com', 'admin')\" | python manage.py shell
+               python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
-      - "8000:8000"
+      - 8000:8000
     environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -60,6 +70,7 @@ services:
         condition: service_healthy
       celeryworker:
         condition: service_started
+    restart: unless-stopped
 
 volumes:
   postgres_db:
